@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  * Copyright (C) 2017 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -2829,9 +2829,8 @@ static int set_usb_current_limit_vote_cb(struct device *dev,
 
 	effective_id = get_effective_client_id_locked(chip->usb_icl_votable);
 
-	/* disable parallel charging if HVDCP is voting for 300mA */
-	if (effective_id == HVDCP_ICL_VOTER)
-		smbchg_parallel_usb_disable(chip);
+	/* Disable parallel charger if ICL is changed */
+	smbchg_parallel_usb_disable(chip);
 
 	if (chip->parallel.current_max_ma == 0) {
 		rc = smbchg_set_usb_current_max(chip, icl_ma);
@@ -4754,6 +4753,7 @@ printk("set_usb_charge_mode_par off = %d\n", set_usb_charge_mode_par);
 		chip->typec_current_ma = 0;
 	/* cancel/wait for hvdcp pending work if any */
 	cancel_delayed_work_sync(&chip->hvdcp_det_work);
+	smbchg_relax(chip, PM_DETECT_HVDCP);
 	smbchg_change_usb_supply_type(chip, POWER_SUPPLY_TYPE_UNKNOWN);
 	if (!chip->skip_usb_notification) {
 		pr_smb(PR_MISC, "setting usb psy present = %d\n",
@@ -8365,6 +8365,7 @@ static int smbchg_probe(struct spmi_device *spmi)
 
 	rerun_hvdcp_det_if_necessary(chip);
 
+	update_usb_status(chip, is_usb_present(chip), false);
 	dump_regs(chip);
 	create_debugfs_entries(chip);
 	dev_info(chip->dev,

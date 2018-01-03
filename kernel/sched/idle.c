@@ -68,7 +68,7 @@ static inline int cpu_idle_poll(void)
 	trace_cpu_idle_rcuidle(0, smp_processor_id());
 	local_irq_enable();
 	while (!tif_need_resched() &&
-	       (cpu_idle_force_poll
+	       (cpu_idle_force_poll || tick_check_broadcast_expired()
 #ifdef CONFIG_SCHED_IDLE_FORCEPOLL
 		|| __get_cpu_var(idle_force_poll)
 #endif
