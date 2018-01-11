@@ -3034,16 +3034,28 @@ static int gtp_fb_notifier_callback(struct notifier_block *noti, unsigned long e
 	struct fb_event *ev_data = data;
 	struct goodix_ts_data *ts = container_of(noti, struct goodix_ts_data, notifier);
 	int *blank;
+	bool disable_touch;
 
 	if (ev_data && ev_data->data && event == FB_EVENT_BLANK && ts) {
 		blank = ev_data->data;
-		if (*blank == FB_BLANK_UNBLANK) {
-			GTP_DEBUG("Resume by fb notifier.");
-			goodix_ts_resume(ts);
-
-		} else if (*blank == FB_BLANK_POWERDOWN) {
+		switch (*blank) {
+		case FB_BLANK_UNBLANK:
+		case FB_BLANK_NORMAL:
+		case FB_BLANK_VSYNC_SUSPEND:
+		case FB_BLANK_HSYNC_SUSPEND:
+			disable_touch = false;
+			break;
+		case FB_BLANK_POWERDOWN:
+		default:
+			disable_touch = true;
+			break;
+		}
+		if (disable_touch) {
 			GTP_DEBUG("Suspend by fb notifier.");
 			goodix_ts_suspend(ts);
+		} else {
+			GTP_DEBUG("Resume by fb notifier.");
+			goodix_ts_resume(ts);
 		}
 	}
 
