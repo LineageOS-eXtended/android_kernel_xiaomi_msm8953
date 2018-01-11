@@ -2305,16 +2305,30 @@ static int fb_notifier_callback(struct notifier_block *self,
 {
 	struct fb_event *evdata = data;
 	int *blank;
+	bool disable_touch;
 	struct goodix_ts_data *ts =
 		container_of(self, struct goodix_ts_data, fb_notif);
 
 	if (evdata && evdata->data && event == FB_EVENT_BLANK &&
 			ts && ts->client) {
 		blank = evdata->data;
-		if (*blank == FB_BLANK_UNBLANK)
-			goodix_ts_resume(&ts->client->dev);
-		else if (*blank == FB_BLANK_POWERDOWN)
+		switch (*blank) {
+		case FB_BLANK_UNBLANK:
+		case FB_BLANK_NORMAL:
+		case FB_BLANK_VSYNC_SUSPEND:
+		case FB_BLANK_HSYNC_SUSPEND:
+			disable_touch = false;
+			break;
+		case FB_BLANK_POWERDOWN:
+		default:
+			disable_touch = true;
+			break;
+		}
+		if (disable_touch) {
 			goodix_ts_suspend(&ts->client->dev);
+		} else {
+			goodix_ts_resume(&ts->client->dev);
+		}
 	}
 
 	return 0;
