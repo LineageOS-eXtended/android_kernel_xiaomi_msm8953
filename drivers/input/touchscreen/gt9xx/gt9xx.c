@@ -825,12 +825,14 @@ static void goodix_ts_work_func(struct work_struct *work)
 		return;
 	}
 
-	if ((finger & 0x80) == 0)
+	if ((finger & 0x80) == 0) {
 		goto exit_work_func;
+	}
 
 	touch_num = finger & 0x0f;
-	if (touch_num > GTP_MAX_TOUCH)
+	if (touch_num > GTP_MAX_TOUCH) {
 		goto exit_work_func;
+	}
 
 	if (touch_num > 1) {
 		u8 buf[8 * GTP_MAX_TOUCH] = { (GTP_READ_COOR_ADDR + 10) >> 8,
